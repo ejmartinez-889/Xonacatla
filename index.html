@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xonacatla, Guerrero — Un rincón del norte guerrerense</title>
+<meta name="description" content="Descubre Xonacatla, un pequeño pueblo del municipio de Cocula, Guerrero, México: su gente, la región del río Balsas, sus fiestas y cómo llegar. Discover Xonacatla, a small village in Cocula, Guerrero, Mexico.">
+<style>
+  :root{
+    --rojo:#c0392b; --rosa:#e84393; --verde:#1e8449; --amarillo:#f5b041;
+    --crema:#fdf6ec; --tinta:#2c2418; --cafe:#7d5a3c; --blanco:#fff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Georgia,'Times New Roman',serif;background:transparent;color:var(--tinta);line-height:1.7}
+
+  /* Video background (drone footage of Xonacatla) */
+  #bgvid{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;pointer-events:none}
+  @media (prefers-reduced-motion:reduce){#bgvid{display:none}}
+  .sans{font-family:'Segoe UI',Helvetica,Arial,sans-serif}
+
+  /* Papel picado banner */
+  .picado{height:26px;background:
+    linear-gradient(135deg,var(--rosa) 25%,transparent 25%) 0 0/26px 26px,
+    linear-gradient(225deg,var(--rosa) 25%,transparent 25%) 0 0/26px 26px,
+    linear-gradient(135deg,var(--verde) 25%,transparent 25%) 13px 0/26px 26px,
+    linear-gradient(225deg,var(--verde) 25%,transparent 25%) 13px 0/26px 26px,
+    var(--amarillo)}
+
+  header{background:transparent;color:var(--blanco);text-align:center;padding:64px 20px 52px;position:relative;overflow:hidden;text-shadow:0 2px 14px rgba(0,0,0,.75),0 0 4px rgba(0,0,0,.6)}
+  header h1{font-size:clamp(2.2rem,6vw,3.6rem);letter-spacing:2px}
+  header .tag{font-style:italic;font-size:1.15rem;color:#fbe4c9;margin-top:10px}
+  header .glyph{font-size:2.2rem;margin-top:14px}
+
+  nav{background:var(--tinta);position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;justify-content:center;gap:2px;padding:6px 8px}
+  nav a{color:#f3e8d8;text-decoration:none;padding:10px 16px;font-size:.95rem;border-radius:6px;font-family:'Segoe UI',sans-serif}
+  nav a:hover{background:#4a3d2c}
+  nav a.active{background:var(--rojo);color:#fff}
+  nav .lang{margin-left:12px;background:var(--amarillo);color:var(--tinta);border:none;padding:9px 16px;border-radius:6px;font-weight:700;cursor:pointer;font-family:'Segoe UI',sans-serif}
+
+  main{max-width:960px;margin:26px auto 60px;padding:36px 30px 46px;background:rgba(253,246,236,.93);border-radius:14px;box-shadow:0 6px 30px rgba(0,0,0,.25)}
+  .page{display:none}
+  .page.visible{display:block;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  h2{color:var(--rojo);font-size:2rem;margin:34px 0 12px;border-bottom:3px solid var(--amarillo);display:inline-block;padding-bottom:4px}
+  h3{color:var(--cafe);margin:24px 0 8px;font-size:1.25rem}
+  p{margin:12px 0}
+  .lead{font-size:1.15rem}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin:26px 0}
+  .card{background:var(--blanco);border:1px solid #e8dcc8;border-top:5px solid var(--verde);border-radius:10px;padding:18px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+  .card .big{font-size:1.7rem;font-weight:700;color:var(--rojo);font-family:'Segoe UI',sans-serif}
+  .card .lbl{font-size:.9rem;color:var(--cafe)}
+
+  .note{background:#fff6e3;border-left:5px solid var(--amarillo);padding:14px 18px;border-radius:0 8px 8px 0;margin:20px 0;font-size:.98rem}
+
+  table{width:100%;border-collapse:collapse;margin:18px 0;background:var(--blanco);font-size:.97rem}
+  th,td{padding:10px 14px;border:1px solid #e8dcc8;text-align:left}
+  th{background:var(--rojo);color:#fff;font-family:'Segoe UI',sans-serif}
+  tr:nth-child(even) td{background:#faf3e6}
+
+  /* Gallery */
+  .upload-box{background:var(--blanco);border:2px dashed var(--verde);border-radius:12px;padding:26px;text-align:center;margin:24px 0}
+  .upload-box input[type=file]{display:none}
+  .btn{display:inline-block;background:var(--verde);color:#fff;border:none;padding:12px 26px;border-radius:8px;font-size:1rem;cursor:pointer;font-family:'Segoe UI',sans-serif;font-weight:600}
+  .btn:hover{filter:brightness(1.1)}
+  .btn.rojo{background:var(--rojo)}
+  .upload-box input[type=text]{width:min(420px,90%);padding:10px 12px;margin:8px 0;border:1px solid #cbb;border-radius:6px;font-size:1rem}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px;margin-top:26px}
+  .photo{background:var(--blanco);border-radius:10px;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.12);position:relative}
+  .photo img{width:100%;height:190px;object-fit:cover;display:block}
+  .photo .cap{padding:10px 12px;font-size:.92rem}
+  .photo .who{color:var(--cafe);font-size:.82rem}
+  .photo .del{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:.9rem}
+  .empty{text-align:center;color:var(--cafe);font-style:italic;padding:40px 10px}
+
+  footer{background:var(--tinta);color:#d9c9ad;text-align:center;padding:28px 18px;font-size:.9rem}
+  footer a{color:var(--amarillo)}
+  .src{font-size:.85rem;color:#8a7a5f;margin-top:30px;border-top:1px solid #e0d4bd;padding-top:14px}
+  .src a{color:var(--cafe)}
+</style>
+</head>
+<body>
+
+<video id="bgvid" autoplay muted loop playsinline preload="metadata" poster="xonacatla_poster.jpg" aria-hidden="true">
+  <source src="xonacatla_fondo.mp4" type="video/mp4">
+</video>
+
+<header>
+  <h1>Xonacatla</h1>
+  <div class="tag" data-i18n="tagline">Municipio de Cocula · Región Norte de Guerrero · México</div>
+  <div class="glyph">🌵 🏞️ 🇲🇽</div>
+</header>
+
+<nav id="nav">
+  <a href="#inicio" data-i18n="nav_home">Inicio</a>
+  <a href="#pueblo" data-i18n="nav_town">El Pueblo</a>
+  <a href="#region" data-i18n="nav_region">La Región</a>
+  <a href="#cultura" data-i18n="nav_culture">Fiestas y Cultura</a>
+  <a href="#visitar" data-i18n="nav_visit">Visitar</a>
+  <a href="#galeria" data-i18n="nav_gallery">📷 Galería de Viajeros</a>
+  <button class="lang" id="langBtn" onclick="toggleLang()">EN</button>
+</nav>
+
+<main>
+
+<!-- ============ INICIO ============ -->
+<section class="page" id="page-inicio">
+  <h2 data-i18n="home_title">Bienvenidos a Xonacatla</h2>
+  <p class="lead" data-i18n="home_lead">En el norte del estado de Guerrero, entre cerros y tierras cálidas de la cuenca del río Balsas, se encuentra Xonacatla: un pequeño pueblo del municipio de Cocula, a unos 6 kilómetros al oriente de la cabecera municipal. Su nombre viene del náhuatl <em>xonacatl</em>, «cebolla» — el lugar de las cebollas.</p>
+  <p data-i18n="home_p2">Xonacatla es de esos rincones de México que no aparecen en las guías turísticas: una comunidad de unas doscientas personas donde la vida gira en torno a la familia, el campo, la fe y las fiestas del pueblo. Este sitio existe para que quienes tienen raíces aquí — y quienes sienten curiosidad — puedan conocerlo, encontrarlo en el mapa y compartir sus recuerdos.</p>
+  <div class="cards sans">
+    <div class="card"><div class="big">201</div><div class="lbl" data-i18n="stat_pop">Habitantes (Censo INEGI 2020)</div></div>
+    <div class="card"><div class="big">≈798 m</div><div class="lbl" data-i18n="stat_alt">Altitud sobre el nivel del mar</div></div>
+    <div class="card"><div class="big">26 °C</div><div class="lbl" data-i18n="stat_temp">Temperatura media anual</div></div>
+    <div class="card"><div class="big">40582</div><div class="lbl" data-i18n="stat_cp">Código postal</div></div>
+  </div>
+  <p data-i18n="home_p3">Explora las secciones para conocer el pueblo, la historia de su región y cómo llegar — y visita la Galería de Viajeros para compartir tus propias fotos de Xonacatla.</p>
+</section>
+
+<!-- ============ EL PUEBLO ============ -->
+<section class="page" id="page-pueblo">
+  <h2 data-i18n="town_title">El Pueblo</h2>
+  <p class="lead" data-i18n="town_lead">Xonacatla es una localidad rural del municipio de Cocula, Guerrero, ubicada aproximadamente en las coordenadas 18.249° N, 99.597° O, a 6.4 kilómetros al este del pueblo de Cocula, la localidad más poblada del municipio.</p>
+  <p data-i18n="town_p1">Según el Censo de Población y Vivienda 2020 del INEGI, aquí viven alrededor de 201 personas. Es una comunidad pequeña y muy unida, de las 37 localidades que integran el municipio. Como en gran parte del México rural, muchas familias tienen parientes que han migrado a las ciudades o a Estados Unidos, y el pueblo se llena de vida cuando regresan en las fiestas.</p>
+  <h3 data-i18n="town_h2">Tierra caliente</h3>
+  <p data-i18n="town_p2">El clima es cálido semiárido: la temperatura media anual ronda los 26 °C, con lluvias concentradas en el verano. El paisaje es de matorrales, pastos y cerros de la depresión del Balsas — tierra de temporal, ganado y huertos familiares.</p>
+  <div class="note" data-i18n="town_note">📌 Nota honesta: sobre un pueblo tan pequeño hay poca información publicada. Los datos de esta página provienen del INEGI y de fuentes del municipio de Cocula. Si eres de Xonacatla y algo aquí se puede mejorar o corregir, ¡tu conocimiento vale más que cualquier fuente!</div>
+</section>
+
+<!-- ============ LA REGION ============ -->
+<section class="page" id="page-region">
+  <h2 data-i18n="reg_title">La Región: Cocula y el norte de Guerrero</h2>
+  <h3 data-i18n="reg_h1">Historia</h3>
+  <p data-i18n="reg_p1">La zona de Cocula fue de las primeras conquistas mexicas en el actual Guerrero: el rey Itzcóatl envió tropas a esta región del valle del Balsas. Siglos después, el 4 de diciembre de 1851, Cocula se constituyó como municipio, dependiente del distrito de Hidalgo con cabecera en Iguala, siendo gobernador el general Juan N. Álvarez.</p>
+  <p data-i18n="reg_p2">Durante la Revolución Mexicana, en 1912, los jefes zapatistas Jesús H. Salgado, Heliodoro Castillo, Epifanio Rodríguez, Custodio Hernández y Pedro Guzmán se reunieron precisamente en Cocula para planear la toma de Iguala — un episodio que da idea del papel de esta tierra en la historia del sur.</p>
+  <h3 data-i18n="reg_h2">Ríos y paisaje</h3>
+  <p data-i18n="reg_p3">El municipio forma parte de la cuenca del río Balsas y lo cruzan los ríos Cocula, Chiquito, San Juan y Ahuehuepan. Sus playas de río y pozas son el atractivo natural más querido de la zona, ideales para refrescarse en el calor de la tierra caliente.</p>
+  <h3 data-i18n="reg_h3">Vecinos ilustres</h3>
+  <p data-i18n="reg_p4">A unos 21 kilómetros está Iguala de la Independencia, cuna de la bandera de México y del Plan de Iguala de 1821. Y a menos de una hora hacia el norte, el pueblo mágico de Taxco de Alarcón, famoso por su platería y su arquitectura colonial. Xonacatla queda a un paso de dos de los lugares más históricos de Guerrero.</p>
+</section>
+
+<!-- ============ CULTURA ============ -->
+<section class="page" id="page-cultura">
+  <h2 data-i18n="cult_title">Fiestas y Cultura</h2>
+  <h3 data-i18n="cult_h1">El simulacro del 16 de septiembre</h3>
+  <p data-i18n="cult_p1">La fiesta más importante del municipio de Cocula es el aniversario de la Independencia. Cada 16 de septiembre se realiza en el zócalo un tradicional simulacro de guerra: grupos que representan a indígenas y españoles escenifican la batalla, acompañados de un cañón de la época de la Independencia al que llaman cariñosamente «el niño».</p>
+  <h3 data-i18n="cult_h2">Fe y tradición</h3>
+  <p data-i18n="cult_p2">Como en toda la región, la fe católica marca el calendario: el 12 de diciembre se celebra con devoción a la Virgen de Guadalupe, además de las fiestas patronales de cada comunidad, las posadas de diciembre, la Semana Santa y las ofrendas de Día de Muertos. En comunidades pequeñas como Xonacatla, estas fechas son también reencuentros: los hijos del pueblo que viven fuera vuelven a casa.</p>
+  <h3 data-i18n="cult_h3">Sabores de la tierra caliente</h3>
+  <p data-i18n="cult_p3">La cocina del norte de Guerrero es de fogón y de fiesta: pozole verde y blanco al estilo Guerrero, barbacoa de chivo, mole rojo en las bodas y fiestas patronales, tamales, memelas y las aguas frescas que alivian el calor. En temporada de lluvias, los guisos con quelites y frutos de la milpa completan la mesa.</p>
+</section>
+
+<!-- ============ VISITAR ============ -->
+<section class="page" id="page-visitar">
+  <h2 data-i18n="visit_title">Cómo llegar y qué saber</h2>
+  <table class="sans">
+    <tr><th data-i18n="t_q">Dato</th><th data-i18n="t_a">Información</th></tr>
+    <tr><td data-i18n="v_r1a">Ubicación</td><td data-i18n="v_r1b">Municipio de Cocula, región Norte de Guerrero, México (CP 40582)</td></tr>
+    <tr><td data-i18n="v_r2a">Desde Iguala</td><td data-i18n="v_r2b">≈ 21 km a Cocula por la Carretera Federal 51 (Iguala–Cd. Altamirano), unos 20–25 min; Xonacatla está a 6.4 km al este de Cocula</td></tr>
+    <tr><td data-i18n="v_r3a">Desde Chilpancingo</td><td data-i18n="v_r3b">≈ 113 km: Carretera Federal 95 hasta Iguala y de ahí la Federal 51 hacia Cocula</td></tr>
+    <tr><td data-i18n="v_r4a">Desde CDMX</td><td data-i18n="v_r4b">Autopista del Sol hacia Iguala (≈ 2.5–3 h) y de ahí rumbo a Cocula</td></tr>
+    <tr><td data-i18n="v_r5a">Clima</td><td data-i18n="v_r5b">Cálido semiárido, media de 26 °C — ropa ligera, sombrero y agua; lluvias en verano</td></tr>
+    <tr><td data-i18n="v_r6a">Mejor época</td><td data-i18n="v_r6b">Mediados de septiembre (fiestas patrias en Cocula) y diciembre, cuando el pueblo recibe a los que regresan</td></tr>
+  </table>
+  <h3 data-i18n="visit_h2">Qué hacer en la zona</h3>
+  <p data-i18n="visit_p1">Disfruta las playas de río y pozas del municipio, conoce el zócalo de Cocula y su monumento al general Vicente Guerrero, visita Iguala — cuna de la bandera nacional — y date una escapada a Taxco, a menos de una hora. Y sobre todo: plática con la gente; la hospitalidad es el verdadero atractivo de estos pueblos.</p>
+  <div class="note" data-i18n="visit_note">🚌 Transporte: desde Iguala salen combis y taxis colectivos hacia Cocula y sus comunidades. Pregunta en la central por la corrida que pasa por Xonacatla.</div>
+</section>
+
+<!-- ============ GALERIA ============ -->
+<section class="page" id="page-galeria">
+  <h2 data-i18n="gal_title">Galería de Viajeros 📷</h2>
+  <p data-i18n="gal_lead">¿Visitaste Xonacatla o tienes raíces aquí? Comparte tus fotos del pueblo, sus paisajes, su gente y sus fiestas.</p>
+  <div class="note" data-i18n="gal_demo">⚠️ Versión demo: las fotos se guardan solo en tu navegador (no se comparten con otros visitantes todavía). Para compartirlas públicamente se necesita conectar un servidor de almacenamiento.</div>
+  <div class="upload-box">
+    <p style="font-size:2rem;margin:0">🏞️</p>
+    <input type="text" id="upName" data-i18n-ph="ph_name" placeholder="Tu nombre (opcional)">
+    <br>
+    <input type="text" id="upCap" data-i18n-ph="ph_cap" placeholder="Descripción de la foto (opcional)">
+    <br>
+    <label class="btn" for="upFile" data-i18n="btn_choose">Elegir foto y publicar</label>
+    <input type="file" id="upFile" accept="image/*" multiple>
+  </div>
+  <div style="text-align:right"><button class="btn rojo" id="clearBtn" style="display:none" onclick="clearGallery()" data-i18n="btn_clear">Borrar mis fotos</button></div>
+  <div class="grid" id="gallery"></div>
+  <div class="empty" id="emptyMsg" data-i18n="gal_empty">Aún no hay fotos. ¡Sé la primera persona en compartir tu viaje!</div>
+</section>
+
+<div class="src">
+  <strong data-i18n="src_t">Fuentes / Sources:</strong>
+  <a href="https://mexico.pueblosamerica.com/i/xonacatla/" target="_blank">PueblosAmerica — Xonacatla (Cocula, Gro.), datos INEGI</a> ·
+  <a href="https://enciclopediagro.mx/indice-municipios/municipio-de-cocula/" target="_blank">Enciclopedia Guerrerense — Municipio de Cocula</a> ·
+  <a href="http://administracion2015-2021.guerrero.gob.mx/municipios/norte/cocula/" target="_blank">Gobierno de Guerrero — Cocula</a> ·
+  <a href="https://es.wikipedia.org/wiki/Cocula_(Guerrero)" target="_blank">Wikipedia — Cocula (Guerrero)</a> ·
+  <a href="https://maps.app.goo.gl/pEN8Voe53NY9D8tW8" target="_blank">Google Maps — Xonacatla, Guerrero</a>
+</div>
+</main>
+
+<footer>
+  <div data-i18n="foot">Sitio comunitario no oficial dedicado a Xonacatla, Cocula, Guerrero · Hecho con cariño 🇲🇽</div>
+</footer>
+
+<script>
+/* ================= i18n ================= */
+const T = {
+ en:{
+  tagline:"Municipality of Cocula · Northern Guerrero · Mexico",
+  nav_home:"Home",nav_town:"The Village",nav_region:"The Region",nav_culture:"Fiestas & Culture",nav_visit:"Visit",nav_gallery:"📷 Travelers' Gallery",
+  home_title:"Welcome to Xonacatla",
+  home_lead:"In the north of the state of Guerrero, among hills and warm lands of the Balsas river basin, lies Xonacatla: a small village in the municipality of Cocula, about 6 kilometers east of the municipal seat. Its name comes from the Nahuatl xonacatl, “onion” — the place of onions.",
+  home_p2:"Xonacatla is one of those corners of Mexico that don't appear in guidebooks: a community of about two hundred people where life revolves around family, farming, faith and the village fiestas. This site exists so that those with roots here — and the curious — can learn about it, find it on the map, and share their memories.",
+  stat_pop:"Residents (INEGI 2020 census)",stat_alt:"Meters above sea level",stat_temp:"Average annual temperature",stat_cp:"Postal code",
+  home_p3:"Explore the sections to learn about the village, the history of its region and how to get there — and visit the Travelers' Gallery to share your own photos of Xonacatla.",
+  town_title:"The Village",
+  town_lead:"Xonacatla is a rural locality in the municipality of Cocula, Guerrero, located at roughly 18.249° N, 99.597° W, 6.4 kilometers east of the town of Cocula, the municipality's most populated locality.",
+  town_p1:"According to INEGI's 2020 Population and Housing Census, about 201 people live here. It is a small, close-knit community — one of the 37 localities that make up the municipality. As in much of rural Mexico, many families have relatives who have migrated to the cities or to the United States, and the village comes alive when they return for the fiestas.",
+  town_h2:"Hot country",
+  town_p2:"The climate is hot and semi-arid: the average annual temperature is around 26 °C (79 °F), with rains concentrated in summer. The landscape is scrubland, grasses and the hills of the Balsas depression — a land of seasonal farming, livestock and family orchards.",
+  town_note:"📌 Honest note: little has been published about such a small village. The data on this page comes from INEGI and from sources about the municipality of Cocula. If you are from Xonacatla and something here can be improved or corrected, your knowledge is worth more than any source!",
+  reg_title:"The Region: Cocula and northern Guerrero",
+  reg_h1:"History",
+  reg_p1:"The Cocula area was among the first Aztec conquests in today's Guerrero: King Itzcóatl sent troops to this part of the Balsas valley. Centuries later, on December 4, 1851, Cocula was established as a municipality, under the district of Hidalgo with its seat in Iguala, during the governorship of General Juan N. Álvarez.",
+  reg_p2:"During the Mexican Revolution, in 1912, the Zapatista chiefs Jesús H. Salgado, Heliodoro Castillo, Epifanio Rodríguez, Custodio Hernández and Pedro Guzmán met right here in Cocula to plan the taking of Iguala — an episode that hints at this land's role in the history of the south.",
+  reg_h2:"Rivers and landscape",
+  reg_p3:"The municipality is part of the Balsas river basin and is crossed by the Cocula, Chiquito, San Juan and Ahuehuepan rivers. Its river beaches and swimming holes (pozas) are the area's best-loved natural attraction — perfect for cooling off in the tierra caliente heat.",
+  reg_h3:"Illustrious neighbors",
+  reg_p4:"About 21 kilometers away is Iguala de la Independencia, birthplace of the Mexican flag and of the 1821 Plan of Iguala. And less than an hour to the north, the magical town of Taxco de Alarcón, famous for its silverwork and colonial architecture. Xonacatla sits a stone's throw from two of Guerrero's most historic places.",
+  cult_title:"Fiestas & Culture",
+  cult_h1:"The September 16 mock battle",
+  cult_p1:"The most important fiesta in the municipality of Cocula is the anniversary of Mexican Independence. Every September 16, a traditional mock battle is staged in the town square: groups representing Indigenous fighters and Spaniards re-enact the struggle, accompanied by an Independence-era cannon affectionately called “el niño” (the child).",
+  cult_h2:"Faith and tradition",
+  cult_p2:"As throughout the region, the Catholic faith shapes the calendar: December 12 is devoted to the Virgin of Guadalupe, along with each community's patron-saint fiestas, December posadas, Holy Week and Day of the Dead ofrendas. In small communities like Xonacatla, these dates are also reunions: the village's sons and daughters who live away come back home.",
+  cult_h3:"Flavors of the tierra caliente",
+  cult_p3:"Northern Guerrero's cooking is hearth-and-fiesta food: Guerrero-style green and white pozole, goat barbacoa, red mole at weddings and patron fiestas, tamales, memelas, and the aguas frescas that ease the heat. In the rainy season, stews with wild greens and milpa harvests complete the table.",
+  visit_title:"Getting there & what to know",
+  t_q:"Fact",t_a:"Details",
+  v_r1a:"Location",v_r1b:"Municipality of Cocula, Northern region of Guerrero, Mexico (postal code 40582)",
+  v_r2a:"From Iguala",v_r2b:"≈ 21 km to Cocula via Federal Highway 51 (Iguala–Cd. Altamirano), about 20–25 min; Xonacatla is 6.4 km east of Cocula",
+  v_r3a:"From Chilpancingo",v_r3b:"≈ 113 km: Federal Highway 95 to Iguala, then Federal 51 toward Cocula",
+  v_r4a:"From Mexico City",v_r4b:"Autopista del Sol toward Iguala (≈ 2.5–3 h), then on toward Cocula",
+  v_r5a:"Climate",v_r5b:"Hot semi-arid, 26 °C average — light clothing, a hat and water; summer rains",
+  v_r6a:"Best time",v_r6b:"Mid-September (Independence fiestas in Cocula) and December, when the village welcomes back those who return",
+  visit_h2:"What to do in the area",
+  visit_p1:"Enjoy the municipality's river beaches and swimming holes, see Cocula's town square and its monument to General Vicente Guerrero, visit Iguala — birthplace of the national flag — and take a side trip to Taxco, under an hour away. Above all: talk with the people; hospitality is the true attraction of these villages.",
+  visit_note:"🚌 Transport: combis and shared taxis leave Iguala for Cocula and its communities. Ask at the station for the route that passes through Xonacatla.",
+  gal_title:"Travelers' Gallery 📷",
+  gal_lead:"Have you visited Xonacatla, or do you have roots here? Share your photos of the village, its landscapes, its people and its fiestas.",
+  gal_demo:"⚠️ Demo version: photos are saved only in your browser (they are not yet shared with other visitors). Sharing publicly requires connecting a storage backend.",
+  ph_name:"Your name (optional)",ph_cap:"Photo caption (optional)",
+  btn_choose:"Choose photo & post",btn_clear:"Delete my photos",
+  gal_empty:"No photos yet. Be the first to share your trip!",
+  src_t:"Sources:",
+  foot:"Unofficial community site dedicated to Xonacatla, Cocula, Guerrero · Made with love 🇲🇽",
+  anon:"Anonymous traveler"
+ },
+ es:{anon:"Viajero anónimo"}
+};
+let lang='es';
+const esDefaults={};
+document.querySelectorAll('[data-i18n]').forEach(el=>{esDefaults[el.dataset.i18n]=el.innerHTML});
+document.querySelectorAll('[data-i18n-ph]').forEach(el=>{esDefaults[el.dataset.i18nPh]=el.placeholder});
+
+function toggleLang(){
+  lang = lang==='es' ? 'en' : 'es';
+  document.documentElement.lang = lang;
+  document.getElementById('langBtn').textContent = lang==='es' ? 'EN' : 'ES';
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.dataset.i18n;
+    el.innerHTML = lang==='en' ? (T.en[k]||esDefaults[k]) : esDefaults[k];
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
+    const k=el.dataset.i18nPh;
+    el.placeholder = lang==='en' ? (T.en[k]||esDefaults[k]) : esDefaults[k];
+  });
+}
+
+/* ================= routing ================= */
+const pages=['inicio','pueblo','region','cultura','visitar','galeria'];
+function route(){
+  let h=(location.hash||'#inicio').slice(1);
+  if(!pages.includes(h)) h='inicio';
+  pages.forEach(p=>document.getElementById('page-'+p).classList.toggle('visible',p===h));
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+h));
+  window.scrollTo({top:0});
+}
+window.addEventListener('hashchange',route);
+route();
+
+/* ================= gallery (browser-only demo) ================= */
+let photos=[];
+let canStore=false;
+try{
+  localStorage.setItem('_t','1');localStorage.removeItem('_t');
+  canStore=true;
+  photos=JSON.parse(localStorage.getItem('xona_photos')||'[]');
+}catch(e){ photos=[]; }
+
+function save(){
+  if(!canStore) return;
+  try{ localStorage.setItem('xona_photos',JSON.stringify(photos)); }
+  catch(e){ alert(lang==='es'
+    ? 'Almacenamiento lleno: la foto se mostrará pero podría no conservarse al cerrar el navegador.'
+    : 'Storage full: the photo will display but may not persist after closing the browser.'); }
+}
+
+function render(){
+  const g=document.getElementById('gallery');
+  g.innerHTML='';
+  document.getElementById('emptyMsg').style.display = photos.length ? 'none':'block';
+  document.getElementById('clearBtn').style.display = photos.length ? 'inline-block':'none';
+  photos.forEach((p,i)=>{
+    const d=document.createElement('div');
+    d.className='photo';
+    const who = p.who || (lang==='es'?'Viajero anónimo':T.en.anon);
+    d.innerHTML=`<button class="del" title="Eliminar" onclick="delPhoto(${i})">✕</button>
+      <img src="${p.src}" alt="">
+      <div class="cap">${escapeHtml(p.cap)||'&nbsp;'}<div class="who">— ${escapeHtml(who)} · ${p.date}</div></div>`;
+    g.appendChild(d);
+  });
+}
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+document.getElementById('upFile').addEventListener('change',ev=>{
+  const files=[...ev.target.files];
+  const who=document.getElementById('upName').value.trim();
+  const cap=document.getElementById('upCap').value.trim();
+  files.forEach(f=>{
+    if(!f.type.startsWith('image/')) return;
+    const r=new FileReader();
+    r.onload=e=>{
+      // downscale to keep storage small
+      const img=new Image();
+      img.onload=()=>{
+        const MAX=1000, sc=Math.min(1,MAX/Math.max(img.width,img.height));
+        const c=document.createElement('canvas');
+        c.width=img.width*sc; c.height=img.height*sc;
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        photos.unshift({src:c.toDataURL('image/jpeg',.8),who,cap,date:new Date().toLocaleDateString()});
+        save(); render();
+      };
+      img.src=e.target.result;
+    };
+    r.readAsDataURL(f);
+  });
+  ev.target.value='';
+});
+
+function delPhoto(i){ photos.splice(i,1); save(); render(); }
+function clearGallery(){
+  if(confirm(lang==='es'?'¿Borrar todas tus fotos?':'Delete all your photos?')){ photos=[]; save(); render(); }
+}
+render();
+</script>
+</body>
+</html>
