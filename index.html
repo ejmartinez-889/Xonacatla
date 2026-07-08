@@ -66,9 +66,15 @@
   .btn:hover{filter:brightness(1.1)}
   .btn.rojo{background:var(--rojo)}
   .upload-box input[type=text]{width:min(420px,90%);padding:10px 12px;margin:8px 0;border:1px solid #cbb;border-radius:6px;font-size:1rem}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px;margin-top:26px}
-  .photo{background:var(--blanco);border-radius:10px;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.12);position:relative}
-  .photo img{width:100%;height:190px;object-fit:cover;display:block}
+  .grid{columns:3;column-gap:18px;margin-top:26px}
+  @media(max-width:900px){.grid{columns:2}}
+  @media(max-width:560px){.grid{columns:1}}
+  .photo{background:var(--blanco);border-radius:10px;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.12);position:relative;break-inside:avoid;margin-bottom:18px}
+  .photo img{width:100%;height:auto;display:block;cursor:pointer}
+  .lb{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:99;cursor:pointer;padding:20px}
+  .lb.open{display:flex}
+  .lb img{max-width:100%;max-height:100%;border-radius:6px}
+  .upstatus{margin:10px 0;font-size:.95rem;color:var(--cafe);min-height:1.3em}
   .photo .cap{padding:10px 12px;font-size:.92rem}
   .photo .who{color:var(--cafe);font-size:.82rem}
   .photo .del{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:.9rem}
@@ -172,20 +178,22 @@
 <section class="page" id="page-galeria">
   <h2 data-i18n="gal_title">Galería de Viajeros 📷</h2>
   <p data-i18n="gal_lead">¿Visitaste Xonacatla o tienes raíces aquí? Comparte tus fotos del pueblo, sus paisajes, su gente y sus fiestas.</p>
-  <div class="note" data-i18n="gal_demo">⚠️ Versión demo: las fotos se guardan solo en tu navegador (no se comparten con otros visitantes todavía). Para compartirlas públicamente se necesita conectar un servidor de almacenamiento.</div>
+  <div class="note" data-i18n="gal_demo">📷 Las fotos que compartas aquí serán públicas y visibles para todos los visitantes del sitio. Al subir una foto confirmas que es tuya y aceptas publicarla.</div>
   <div class="upload-box">
     <p style="font-size:2rem;margin:0">🏞️</p>
-    <input type="text" id="upName" data-i18n-ph="ph_name" placeholder="Tu nombre (opcional)">
+    <input type="text" id="upName" maxlength="60" data-i18n-ph="ph_name" placeholder="Tu nombre (opcional)">
     <br>
-    <input type="text" id="upCap" data-i18n-ph="ph_cap" placeholder="Descripción de la foto (opcional)">
+    <input type="text" id="upCap" maxlength="280" data-i18n-ph="ph_cap" placeholder="Descripción de la foto (opcional)">
     <br>
     <label class="btn" for="upFile" data-i18n="btn_choose">Elegir foto y publicar</label>
     <input type="file" id="upFile" accept="image/*" multiple>
+    <div class="upstatus" id="upStatus"></div>
   </div>
-  <div style="text-align:right"><button class="btn rojo" id="clearBtn" style="display:none" onclick="clearGallery()" data-i18n="btn_clear">Borrar mis fotos</button></div>
   <div class="grid" id="gallery"></div>
-  <div class="empty" id="emptyMsg" data-i18n="gal_empty">Aún no hay fotos. ¡Sé la primera persona en compartir tu viaje!</div>
+  <div class="empty" id="emptyMsg" style="display:none" data-i18n="gal_empty">Aún no hay fotos. ¡Sé la primera persona en compartir tu viaje!</div>
+  <div style="text-align:center;margin:16px 0"><button class="btn" id="moreBtn" style="display:none" onclick="loadPhotos()" data-i18n="btn_more">Ver más fotos</button></div>
 </section>
+<div class="lb" id="lightbox" onclick="this.classList.remove('open')"><img id="lbImg" alt=""></div>
 
 <div class="src">
   <strong data-i18n="src_t">Fuentes / Sources:</strong>
@@ -246,10 +254,11 @@ const T = {
   visit_note:"🚌 Transport: combis and shared taxis leave Iguala for Cocula and its communities. Ask at the station for the route that passes through Xonacatla.",
   gal_title:"Travelers' Gallery 📷",
   gal_lead:"Have you visited Xonacatla, or do you have roots here? Share your photos of the village, its landscapes, its people and its fiestas.",
-  gal_demo:"⚠️ Demo version: photos are saved only in your browser (they are not yet shared with other visitors). Sharing publicly requires connecting a storage backend.",
+  gal_demo:"📷 Photos you share here are public and visible to all visitors of this site. By uploading you confirm the photo is yours and agree to publish it.",
   ph_name:"Your name (optional)",ph_cap:"Photo caption (optional)",
-  btn_choose:"Choose photo & post",btn_clear:"Delete my photos",
+  btn_choose:"Choose photo & post",btn_more:"Show more photos",
   gal_empty:"No photos yet. Be the first to share your trip!",
+  st_up:"Uploading photo…",st_done:"Photo published. Thank you for sharing!",st_err:"Upload failed. Please try again.",st_big:"Image too large after processing — try a different photo.",st_pend:"Photo received — it will appear once approved.",
   src_t:"Sources:",
   foot:"Unofficial community site dedicated to Xonacatla, Cocula, Guerrero · Made with love 🇲🇽",
   anon:"Anonymous traveler"
@@ -287,70 +296,111 @@ function route(){
 window.addEventListener('hashchange',route);
 route();
 
-/* ================= gallery (browser-only demo) ================= */
-let photos=[];
-let canStore=false;
-try{
-  localStorage.setItem('_t','1');localStorage.removeItem('_t');
-  canStore=true;
-  photos=JSON.parse(localStorage.getItem('xona_photos')||'[]');
-}catch(e){ photos=[]; }
+/* ================= gallery (shared photo wall · Supabase) ================= */
+const SUPA='https://vyarqorszxrsvpappcju.supabase.co';
+const SKEY='sb_publishable_58yrUiDOeWTjwijraKgmXw_vMJBpGMf';
+const HDRS={apikey:SKEY,Authorization:'Bearer '+SKEY};
+const PAGE=24;
+let galOffset=0, galLoaded=false;
 
-function save(){
-  if(!canStore) return;
-  try{ localStorage.setItem('xona_photos',JSON.stringify(photos)); }
-  catch(e){ alert(lang==='es'
-    ? 'Almacenamiento lleno: la foto se mostrará pero podría no conservarse al cerrar el navegador.'
-    : 'Storage full: the photo will display but may not persist after closing the browser.'); }
+function tt(k){
+  const es={st_up:'Subiendo foto…',st_done:'Foto publicada. ¡Gracias por compartir!',
+    st_err:'No se pudo subir la foto. Intenta de nuevo.',
+    st_big:'La imagen es demasiado grande — prueba con otra foto.',
+    st_pend:'Foto recibida — aparecerá cuando sea aprobada.'};
+  return lang==='en' ? T.en[k] : es[k];
 }
-
-function render(){
-  const g=document.getElementById('gallery');
-  g.innerHTML='';
-  document.getElementById('emptyMsg').style.display = photos.length ? 'none':'block';
-  document.getElementById('clearBtn').style.display = photos.length ? 'inline-block':'none';
-  photos.forEach((p,i)=>{
-    const d=document.createElement('div');
-    d.className='photo';
-    const who = p.who || (lang==='es'?'Viajero anónimo':T.en.anon);
-    d.innerHTML=`<button class="del" title="Eliminar" onclick="delPhoto(${i})">✕</button>
-      <img src="${p.src}" alt="">
-      <div class="cap">${escapeHtml(p.cap)||'&nbsp;'}<div class="who">— ${escapeHtml(who)} · ${p.date}</div></div>`;
-    g.appendChild(d);
-  });
-}
+function setStatus(m){document.getElementById('upStatus').textContent=m||''}
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function pubUrl(p){return SUPA+'/storage/v1/object/public/photos/'+p}
 
-document.getElementById('upFile').addEventListener('change',ev=>{
-  const files=[...ev.target.files];
-  const who=document.getElementById('upName').value.trim();
-  const cap=document.getElementById('upCap').value.trim();
-  files.forEach(f=>{
-    if(!f.type.startsWith('image/')) return;
-    const r=new FileReader();
-    r.onload=e=>{
-      // downscale to keep storage small
-      const img=new Image();
-      img.onload=()=>{
-        const MAX=1000, sc=Math.min(1,MAX/Math.max(img.width,img.height));
-        const c=document.createElement('canvas');
-        c.width=img.width*sc; c.height=img.height*sc;
-        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-        photos.unshift({src:c.toDataURL('image/jpeg',.8),who,cap,date:new Date().toLocaleDateString()});
-        save(); render();
-      };
-      img.src=e.target.result;
-    };
-    r.readAsDataURL(f);
-  });
-  ev.target.value='';
-});
-
-function delPhoto(i){ photos.splice(i,1); save(); render(); }
-function clearGallery(){
-  if(confirm(lang==='es'?'¿Borrar todas tus fotos?':'Delete all your photos?')){ photos=[]; save(); render(); }
+function openLb(src){
+  document.getElementById('lbImg').src=src;
+  document.getElementById('lightbox').classList.add('open');
 }
-render();
+
+function addCard(p,prepend){
+  const g=document.getElementById('gallery');
+  const d=document.createElement('div');
+  d.className='photo';
+  const who=p.uploader_name||(lang==='es'?'Viajero anónimo':T.en.anon);
+  const date=new Date(p.created_at).toLocaleDateString();
+  const img=document.createElement('img');
+  img.loading='lazy'; img.src=pubUrl(p.thumb_path); img.alt=p.caption||'';
+  img.addEventListener('click',()=>openLb(pubUrl(p.storage_path)));
+  d.appendChild(img);
+  const cap=document.createElement('div');
+  cap.className='cap';
+  cap.innerHTML=(escapeHtml(p.caption)||'&nbsp;')+`<div class="who">— ${escapeHtml(who)} · ${date}</div>`;
+  d.appendChild(cap);
+  prepend?g.prepend(d):g.appendChild(d);
+}
+
+async function loadPhotos(){
+  try{
+    const q=`${SUPA}/rest/v1/photos?select=storage_path,thumb_path,caption,uploader_name,created_at`+
+      `&approved=eq.true&order=created_at.desc&limit=${PAGE}&offset=${galOffset}`;
+    const r=await fetch(q,{headers:HDRS});
+    if(!r.ok) throw 0;
+    const rows=await r.json();
+    rows.forEach(p=>addCard(p,false));
+    galOffset+=rows.length;
+    document.getElementById('emptyMsg').style.display=galOffset?'none':'block';
+    document.getElementById('moreBtn').style.display=rows.length===PAGE?'inline-block':'none';
+  }catch(e){
+    if(!galOffset) document.getElementById('emptyMsg').style.display='block';
+  }
+}
+
+function shrink(file,max){return new Promise((res,rej)=>{
+  const img=new Image();
+  img.onload=()=>{
+    const sc=Math.min(1,max/Math.max(img.width,img.height));
+    const c=document.createElement('canvas');
+    c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    URL.revokeObjectURL(img.src);
+    c.toBlob(b=>b?res({b,w:c.width,h:c.height}):rej(new Error('encode')),'image/jpeg',.8);
+  };
+  img.onerror=()=>rej(new Error('read'));
+  img.src=URL.createObjectURL(file);
+})}
+
+async function putObj(path,blob){
+  const r=await fetch(SUPA+'/storage/v1/object/photos/'+path,
+    {method:'POST',headers:{...HDRS,'Content-Type':'image/jpeg'},body:blob});
+  if(!r.ok) throw new Error('storage '+r.status);
+}
+
+document.getElementById('upFile').addEventListener('change',async ev=>{
+  const files=[...ev.target.files]; ev.target.value='';
+  const who=document.getElementById('upName').value.trim().slice(0,60);
+  const cap=document.getElementById('upCap').value.trim().slice(0,280);
+  for(const f of files){
+    if(!f.type.startsWith('image/')) continue;
+    if(f.size>10*1024*1024){setStatus(tt('st_big'));continue;}
+    setStatus(tt('st_up'));
+    try{
+      const disp=await shrink(f,1600), th=await shrink(f,400);
+      if(disp.b.size>2*1024*1024){setStatus(tt('st_big'));continue;}
+      const id=crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2);
+      await putObj(id+'.jpg',disp.b);
+      await putObj(id+'_t.jpg',th.b);
+      const r=await fetch(SUPA+'/rest/v1/photos',{method:'POST',
+        headers:{...HDRS,'Content-Type':'application/json',Prefer:'return=representation'},
+        body:JSON.stringify({storage_path:id+'.jpg',thumb_path:id+'_t.jpg',
+          caption:cap||null,uploader_name:who||null,width:disp.w,height:disp.h})});
+      if(!r.ok) throw new Error('db '+r.status);
+      const rec=(await r.json())[0];
+      if(rec&&rec.approved){
+        addCard(rec,true);
+        document.getElementById('emptyMsg').style.display='none';
+        setStatus(tt('st_done'));
+      }else setStatus(tt('st_pend'));
+    }catch(e){setStatus(tt('st_err'));}
+  }
+});
+loadPhotos();
 </script>
 </body>
 </html>
