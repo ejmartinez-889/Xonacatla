@@ -1,0 +1,29 @@
+# Keeps the free-tier Supabase project (Xonacatla-Demo) from auto-pausing
+# after ~7 days without API activity. Runs twice a week so a single missed
+# or delayed cron run can't leave a 7-day gap.
+#
+# The URL and anon key below are the same public values already shipped in
+# index.html (the anon key is safe to expose; RLS is the security boundary).
+# If repo secrets SUPABASE_URL / SUPABASE_ANON_KEY are defined they take
+# precedence over the fallbacks.
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '17 8 * * 1,4' # Mondays and Thursdays 08:17 UTC
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lightweight REST query against the content table
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://vyarqorszxrsvpappcju.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'sb_publishable_58yrUiDOeWTjwijraKgmXw_vMJBpGMf' }}
+        run: |
+          curl --fail --silent --show-error \
+            "$SUPABASE_URL/rest/v1/content?select=key&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -o /dev/null -w 'Supabase responded with HTTP %{http_code}\n'

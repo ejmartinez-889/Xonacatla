@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Xonacatla — Administración</title>
+<style>
+  :root{
+    --rojo:#c0392b; --rosa:#e84393; --verde:#1e8449; --amarillo:#f5b041;
+    --crema:#fdf6ec; --tinta:#2c2418; --cafe:#7d5a3c; --blanco:#fff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Georgia,'Times New Roman',serif;background:var(--crema);color:var(--tinta);line-height:1.6}
+  .sans{font-family:'Segoe UI',Helvetica,Arial,sans-serif}
+
+  .picado{height:26px;background:
+    linear-gradient(135deg,var(--rosa) 25%,transparent 25%) 0 0/26px 26px,
+    linear-gradient(225deg,var(--rosa) 25%,transparent 25%) 0 0/26px 26px,
+    linear-gradient(135deg,var(--verde) 25%,transparent 25%) 13px 0/26px 26px,
+    linear-gradient(225deg,var(--verde) 25%,transparent 25%) 13px 0/26px 26px,
+    var(--amarillo)}
+
+  header{background:var(--tinta);color:#f3e8d8;text-align:center;padding:26px 16px}
+  header h1{font-size:1.7rem;letter-spacing:1px}
+  header .sub{color:var(--amarillo);font-size:.95rem;font-style:italic;margin-top:4px}
+
+  main{max-width:960px;margin:26px auto 60px;padding:0 16px}
+  h2{color:var(--rojo);font-size:1.5rem;margin:34px 0 14px;border-bottom:3px solid var(--amarillo);display:inline-block;padding-bottom:4px}
+
+  .card{background:var(--blanco);border:1px solid #e8dcc8;border-radius:10px;padding:20px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+
+  .btn{display:inline-block;background:var(--verde);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:.98rem;cursor:pointer;font-family:'Segoe UI',sans-serif;font-weight:600}
+  .btn:hover{filter:brightness(1.1)}
+  .btn:disabled{opacity:.5;cursor:default;filter:none}
+  .btn.rojo{background:var(--rojo)}
+  .btn.gris{background:var(--cafe)}
+  .btn.chico{padding:7px 14px;font-size:.9rem}
+
+  input[type=email],input[type=password]{width:100%;padding:11px 12px;margin:6px 0 14px;border:1px solid #cbb;border-radius:6px;font-size:1rem;font-family:'Segoe UI',sans-serif}
+  label{font-family:'Segoe UI',sans-serif;font-size:.92rem;color:var(--cafe)}
+
+  #loginView{max-width:400px;margin:60px auto}
+  .errmsg{color:var(--rojo);font-size:.92rem;min-height:1.3em;margin-top:8px;font-family:'Segoe UI',sans-serif}
+  .okmsg{color:var(--verde)}
+
+  .topbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;background:var(--blanco);border:1px solid #e8dcc8;border-radius:10px;padding:12px 16px;margin-top:20px}
+  .topbar .who{font-size:.95rem;color:var(--cafe)}
+
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin:18px 0}
+  .pitem{background:var(--blanco);border:1px solid #e8dcc8;border-radius:10px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+  .pitem img{width:100%;height:190px;object-fit:cover;display:block;cursor:pointer;background:#eee}
+  .pitem .meta{padding:10px 12px;font-size:.9rem}
+  .pitem .meta .who{color:var(--cafe);font-size:.82rem;margin-top:4px}
+  .pitem .acts{display:flex;gap:8px;padding:0 12px 12px}
+  .pitem .acts .btn{flex:1;text-align:center}
+
+  .trow{background:var(--blanco);border:1px solid #e8dcc8;border-radius:10px;padding:14px 16px;margin:12px 0}
+  .trow .key{font-family:'Segoe UI',sans-serif;font-size:.82rem;color:var(--cafe);letter-spacing:.5px}
+  .trow textarea{width:100%;margin:8px 0;padding:10px 12px;border:1px solid #cbb;border-radius:6px;font-size:.97rem;font-family:Georgia,serif;line-height:1.5;resize:vertical;min-height:2.6em}
+  .trow .foot{display:flex;align-items:center;gap:12px}
+  .badge{display:inline-block;background:var(--amarillo);color:var(--tinta);font-family:'Segoe UI',sans-serif;font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:20px;vertical-align:middle;margin-left:8px}
+  .savest{font-size:.85rem;font-family:'Segoe UI',sans-serif;color:var(--verde);min-height:1.2em}
+
+  .empty{text-align:center;color:var(--cafe);font-style:italic;padding:30px 10px}
+  .note{background:#fff6e3;border-left:5px solid var(--amarillo);padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:.93rem}
+
+  .lb{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:99;cursor:pointer;padding:20px}
+  .lb.open{display:flex}
+  .lb img{max-width:100%;max-height:100%;border-radius:6px}
+
+  footer{text-align:center;color:var(--cafe);font-size:.85rem;padding:24px}
+</style>
+</head>
+<body>
+
+<div class="picado"></div>
+<header>
+  <h1>Xonacatla · Administración</h1>
+  <div class="sub">Fotos de viajeros y textos del sitio</div>
+</header>
+
+<main>
+
+<!-- ========== LOGIN ========== -->
+<section id="loginView" style="display:none">
+  <div class="card">
+    <h2 style="margin-top:0">Iniciar sesión</h2>
+    <form id="loginForm">
+      <label for="email">Correo electrónico</label>
+      <input type="email" id="email" autocomplete="username" required>
+      <label for="password">Contraseña</label>
+      <input type="password" id="password" autocomplete="current-password" required>
+      <button class="btn" type="submit" id="loginBtn">Entrar</button>
+      <div class="errmsg" id="loginErr"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ========== ADMIN ========== -->
+<section id="adminView" style="display:none">
+
+  <div class="topbar sans">
+    <span class="who" id="whoami"></span>
+    <span>
+      <button class="btn chico gris" onclick="changePassword()">Cambiar contraseña</button>
+      <button class="btn chico rojo" onclick="logout()">Cerrar sesión</button>
+    </span>
+  </div>
+
+  <h2>📷 Fotos pendientes <span id="pendCount" class="badge" style="display:none"></span></h2>
+  <p class="note">Las fotos que apruebes aparecerán de inmediato en la galería pública. Las que rechaces se eliminan definitivamente.</p>
+  <div class="pgrid" id="pendGrid"></div>
+  <div class="empty" id="pendEmpty" style="display:none">No hay fotos pendientes de revisión 🎉</div>
+  <div style="margin:8px 0"><button class="btn chico gris" onclick="loadPending()">Actualizar lista</button></div>
+
+  <h2>✏️ Textos del sitio</h2>
+  <p class="note">Edita el texto en español y presiona «Guardar». El texto en inglés se actualiza después por separado — mientras tanto el bloque queda marcado como <span class="badge">traducción pendiente</span>.</p>
+  <div id="textList"></div>
+
+</section>
+
+<div class="lb" id="lightbox" onclick="this.classList.remove('open')"><img id="lbImg" alt=""></div>
+
+</main>
+
+<footer>Xonacatla, Cocula, Guerrero · Panel de administración</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPA_URL='https://vyarqorszxrsvpappcju.supabase.co';
+const SUPA_KEY='sb_publishable_58yrUiDOeWTjwijraKgmXw_vMJBpGMf';
+const sb=window.supabase?window.supabase.createClient(SUPA_URL,SUPA_KEY):null;
+
+function esc(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function pubUrl(p){return SUPA_URL+'/storage/v1/object/public/gallery/'+p}
+function show(id,on){document.getElementById(id).style.display=on?'':'none'}
+
+async function init(){
+  if(!sb){
+    document.body.insertAdjacentHTML('afterbegin','<p style="text-align:center;padding:20px">No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.</p>');
+    return;
+  }
+  const {data:{session}}=await sb.auth.getSession();
+  session?enter(session):show('loginView',true);
+}
+
+function enter(session){
+  show('loginView',false);
+  show('adminView',true);
+  document.getElementById('whoami').textContent='Conectado como '+session.user.email;
+  loadPending();
+  loadTexts();
+}
+
+document.getElementById('loginForm').addEventListener('submit',async ev=>{
+  ev.preventDefault();
+  const btn=document.getElementById('loginBtn'), err=document.getElementById('loginErr');
+  btn.disabled=true; err.textContent='';
+  const {data,error}=await sb.auth.signInWithPassword({
+    email:document.getElementById('email').value.trim(),
+    password:document.getElementById('password').value
+  });
+  btn.disabled=false;
+  if(error){err.textContent='Correo o contraseña incorrectos.';return;}
+  enter(data.session);
+});
+
+async function logout(){
+  await sb.auth.signOut();
+  location.reload();
+}
+
+async function changePassword(){
+  const pw=prompt('Nueva contraseña (mínimo 8 caracteres):');
+  if(!pw) return;
+  if(pw.length<8){alert('La contraseña debe tener al menos 8 caracteres.');return;}
+  const {error}=await sb.auth.updateUser({password:pw});
+  alert(error?'No se pudo cambiar la contraseña: '+error.message:'Contraseña actualizada ✔');
+}
+
+/* ========== fotos pendientes ========== */
+async function loadPending(){
+  const grid=document.getElementById('pendGrid');
+  grid.innerHTML='';
+  const {data,error}=await sb.from('photos')
+    .select('id,storage_path,caption,uploader_name,created_at')
+    .eq('status','pending')
+    .order('created_at',{ascending:true});
+  if(error){grid.innerHTML='<p class="errmsg">Error al cargar: '+esc(error.message)+'</p>';return;}
+  const badge=document.getElementById('pendCount');
+  badge.textContent=data.length;
+  badge.style.display=data.length?'':'none';
+  show('pendEmpty',!data.length);
+  data.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='pitem';
+    const date=new Date(p.created_at).toLocaleString();
+    d.innerHTML=`
+      <img loading="lazy" src="${pubUrl(p.storage_path)}" alt="">
+      <div class="meta">${esc(p.caption)||'<i>Sin descripción</i>'}
+        <div class="who">— ${esc(p.uploader_name)||'Viajero anónimo'} · ${date}</div>
+      </div>
+      <div class="acts">
+        <button class="btn chico">Aprobar</button>
+        <button class="btn chico rojo">Rechazar</button>
+      </div>`;
+    d.querySelector('img').addEventListener('click',()=>{
+      document.getElementById('lbImg').src=pubUrl(p.storage_path);
+      document.getElementById('lightbox').classList.add('open');
+    });
+    const [okBtn,noBtn]=d.querySelectorAll('.acts .btn');
+    okBtn.addEventListener('click',()=>approve(p,d,okBtn,noBtn));
+    noBtn.addEventListener('click',()=>reject(p,d,okBtn,noBtn));
+    grid.appendChild(d);
+  });
+}
+
+async function approve(p,card,...btns){
+  btns.forEach(b=>b.disabled=true);
+  const {error}=await sb.from('photos').update({status:'approved'}).eq('id',p.id);
+  if(error){alert('No se pudo aprobar: '+error.message);btns.forEach(b=>b.disabled=false);return;}
+  card.remove(); refreshCount();
+}
+
+async function reject(p,card,...btns){
+  if(!confirm('¿Rechazar esta foto? Se eliminará definitivamente.')) return;
+  btns.forEach(b=>b.disabled=true);
+  const st=await sb.storage.from('gallery').remove([p.storage_path]);
+  if(st.error){alert('No se pudo borrar el archivo: '+st.error.message);btns.forEach(b=>b.disabled=false);return;}
+  const {error}=await sb.from('photos').delete().eq('id',p.id);
+  if(error){alert('Archivo borrado, pero no se pudo borrar el registro: '+error.message);btns.forEach(b=>b.disabled=false);return;}
+  card.remove(); refreshCount();
+}
+
+function refreshCount(){
+  const n=document.querySelectorAll('#pendGrid .pitem').length;
+  const badge=document.getElementById('pendCount');
+  badge.textContent=n;
+  badge.style.display=n?'':'none';
+  show('pendEmpty',!n);
+}
+
+/* ========== textos del sitio ========== */
+async function loadTexts(){
+  const list=document.getElementById('textList');
+  list.innerHTML='';
+  const {data,error}=await sb.from('content')
+    .select('key,es,en_stale')
+    .order('key',{ascending:true});
+  if(error){list.innerHTML='<p class="errmsg">Error al cargar: '+esc(error.message)+'</p>';return;}
+  data.forEach(row=>{
+    const d=document.createElement('div');
+    d.className='trow';
+    d.innerHTML=`
+      <span class="key">${esc(row.key)}</span><span class="badge" style="${row.en_stale?'':'display:none'}">traducción pendiente</span>
+      <textarea></textarea>
+      <div class="foot">
+        <button class="btn chico" disabled>Guardar</button>
+        <span class="savest"></span>
+      </div>`;
+    const ta=d.querySelector('textarea'), btn=d.querySelector('.btn'),
+          st=d.querySelector('.savest'), badge=d.querySelector('.badge');
+    ta.value=row.es;
+    ta.rows=Math.min(8,Math.max(1,Math.ceil(row.es.length/90)));
+    ta.addEventListener('input',()=>{btn.disabled=ta.value.trim()===row.es;st.textContent=''});
+    btn.addEventListener('click',async()=>{
+      const nuevo=ta.value.trim();
+      if(!nuevo){alert('El texto no puede quedar vacío.');return;}
+      btn.disabled=true; st.textContent='Guardando…';
+      const {data:upd,error:err}=await sb.from('content')
+        .update({es:nuevo}).eq('key',row.key).select('es,en_stale');
+      if(err||!upd||!upd.length){
+        st.textContent=''; btn.disabled=false;
+        alert('No se pudo guardar: '+(err?err.message:'sin permiso'));
+        return;
+      }
+      row.es=upd[0].es;
+      badge.style.display=upd[0].en_stale?'':'none';
+      st.textContent='Guardado ✔';
+      setTimeout(()=>{st.textContent=''},3000);
+    });
+    list.appendChild(d);
+  });
+}
+
+init();
+</script>
+</body>
+</html>
