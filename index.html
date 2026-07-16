@@ -80,6 +80,13 @@
   .photo .del{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:.9rem}
   .empty{text-align:center;color:var(--cafe);font-style:italic;padding:40px 10px}
 
+  /* Upload modals */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:120;padding:20px}
+  .modal.open{display:flex}
+  .modal .mbox{background:var(--crema);border-radius:12px;max-width:460px;width:100%;padding:28px 26px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+  .modal .mbox h3{color:var(--rojo);margin:0 0 12px;font-size:1.35rem}
+  .modal .mbox p{margin:0 0 20px}
+
   footer{background:var(--tinta);color:#d9c9ad;text-align:center;padding:28px 18px;font-size:.9rem}
   footer a{color:var(--amarillo)}
   .src{font-size:.85rem;color:#8a7a5f;margin-top:30px;border-top:1px solid #e0d4bd;padding-top:14px}
@@ -195,6 +202,24 @@
 </section>
 <div class="lb" id="lightbox" onclick="this.classList.remove('open')"><img id="lbImg" alt=""></div>
 
+<!-- upload confirmation modal -->
+<div class="modal" id="mReceived" role="dialog" aria-modal="true" aria-labelledby="mReceivedT">
+  <div class="mbox">
+    <h3 id="mReceivedT" data-i18n="modal_received_title">¡Foto recibida! 📷</h3>
+    <p data-i18n="modal_received_body">Gracias por compartir. Tu foto será revisada por el equipo del sitio y aparecerá en la galería una vez aprobada.</p>
+    <button class="btn" onclick="closeModal('mReceived')" data-i18n="modal_received_ok">Entendido</button>
+  </div>
+</div>
+
+<!-- duplicate photo modal -->
+<div class="modal" id="mDup" role="dialog" aria-modal="true" aria-labelledby="mDupT">
+  <div class="mbox">
+    <h3 id="mDupT" data-i18n="modal_dup_title">Foto ya enviada</h3>
+    <p data-i18n="modal_dup_body">Esta foto ya fue enviada recientemente y está en revisión o publicada. Aparecerá en la galería una vez aprobada — no hace falta subirla de nuevo.</p>
+    <button class="btn" onclick="closeModal('mDup')" data-i18n="modal_dup_ok">Entendido</button>
+  </div>
+</div>
+
 <div class="src">
   <strong data-i18n="src_t">Fuentes / Sources:</strong>
   <a href="https://mexico.pueblosamerica.com/i/xonacatla/" target="_blank">PueblosAmerica — Xonacatla (Cocula, Gro.), datos INEGI</a> ·
@@ -269,6 +294,12 @@ const T = {
   gal_empty:"No photos yet. Be the first to share your trip!",
   gal_unavail:"The gallery is not available right now. Please try again later.",
   st_up:"Uploading photo…",st_err:"Upload failed. Please try again.",st_big:"Image too large after processing — try a different photo.",st_pend:"Thank you! Your photo will be reviewed before it is published.",
+  modal_received_title:"Photo received! 📷",
+  modal_received_body:"Thank you for sharing. Your photo will be reviewed by the site team and will appear in the gallery once it is approved.",
+  modal_received_ok:"Got it",
+  modal_dup_title:"Photo already submitted",
+  modal_dup_body:"This photo was recently submitted and is awaiting review or already published. It will appear in the gallery once approved — no need to upload it again.",
+  modal_dup_ok:"Got it",
   src_t:"Sources:",
   foot:"Unofficial community site dedicated to Xonacatla, Cocula, Guerrero · Made with love 🇲🇽",
   anon:"Anonymous traveler"
@@ -288,8 +319,11 @@ document.querySelectorAll('[data-i18n]').forEach(el=>{esDefaults[el.dataset.i18n
 document.querySelectorAll('[data-i18n-ph]').forEach(el=>{esDefaults[el.dataset.i18nPh]=el.placeholder});
 
 const CONTENT={}; /* key -> {es,en} loaded from Supabase; overrides the static fallbacks */
+const EDITS={};   /* key -> {es?,en?} unsaved admin edits (edit mode only; empty for visitors) */
 
 function txt(k){
+  const o=EDITS[k];
+  if(o&&o[lang]!=null) return o[lang];
   const c=CONTENT[k];
   if(lang==='en') return (c&&c.en)||T.en[k]||(c&&c.es)||esDefaults[k]||'';
   return (c&&c.es)||esDefaults[k]||'';
@@ -332,6 +366,9 @@ const PAGE=24;
 let galOffset=0;
 
 function setStatus(m){document.getElementById('upStatus').textContent=m||''}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function pubUrl(p){return SUPA_URL+'/storage/v1/object/public/gallery/'+p}
 function bilingual(k){
@@ -401,6 +438,11 @@ function shrink(file,max){return new Promise((res,rej)=>{
   img.src=URL.createObjectURL(file);
 })}
 
+async function sha256Hex(blob){
+  const d=await crypto.subtle.digest('SHA-256',await blob.arrayBuffer());
+  return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
 document.getElementById('upFile').addEventListener('change',async ev=>{
   const files=[...ev.target.files]; ev.target.value='';
   if(!sb){setStatus(txt('gal_unavail'));return;}
@@ -413,20 +455,248 @@ document.getElementById('upFile').addEventListener('change',async ev=>{
     try{
       const b=await shrink(f,1000);
       if(b.size>2*1024*1024){setStatus(txt('st_big'));continue;}
+      /* duplicate guard: hash the processed JPEG and ask the server if a
+         pending/approved photo already has it (RLS hides pending rows, so
+         this goes through the photo_hash_exists() function) */
+      let hash=null;
+      try{hash=await sha256Hex(b);}catch(e){/* non-secure context: skip dedupe */}
+      if(hash){
+        const {data:dup,error:dupErr}=await sb.rpc('photo_hash_exists',{hash});
+        if(!dupErr&&dup===true){setStatus('');openModal('mDup');continue;}
+      }
       const id=crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2);
       const path=id+'.jpg';
       const up=await sb.storage.from('gallery').upload(path,b,{contentType:'image/jpeg',cacheControl:'31536000'});
       if(up.error) throw up.error;
-      const ins=await sb.from('photos').insert({storage_path:path,caption:cap||null,uploader_name:who||null,status:'pending'});
-      if(ins.error) throw ins.error;
-      /* shown in both languages so nobody re-uploads thinking it failed */
-      setStatus(bilingual('st_pend'));
+      const ins=await sb.from('photos').insert({storage_path:path,caption:cap||null,uploader_name:who||null,status:'pending',file_hash:hash});
+      if(ins.error){
+        if(ins.error.code==='23505'){setStatus('');openModal('mDup');continue;}
+        throw ins.error;
+      }
+      setStatus('');
+      openModal('mReceived');
     }catch(e){setStatus(txt('st_err'));}
   }
 });
 
+/* ================= edit mode (admins only, via ?edit=1) =================
+   Inert for normal visitors: it only activates when the URL has ?edit=1 AND
+   the browser holds a Supabase session whose user passes is_admin() on the
+   server. The UI gate is cosmetic — RLS remains the security boundary. */
+async function maybeStartEditMode(){
+  if(new URLSearchParams(location.search).get('edit')!=='1'||!sb) return;
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session) return;
+    const {data:ok,error}=await sb.rpc('is_admin');
+    if(error||ok!==true) return;
+    initEditor();
+  }catch(e){/* fall back to the normal site */}
+}
+
+function initEditor(){
+  const ALLOWED={A:['href'],EM:[],STRONG:[],BR:[],UL:[],LI:[]};
+  const hasTags=s=>/<[a-z][^>]*>/i.test(s||'');
+
+  /* value currently persisted (table or static fallback), without unsaved edits */
+  function stored(k){
+    const c=CONTENT[k];
+    if(lang==='en') return (c&&c.en)||T.en[k]||(c&&c.es)||esDefaults[k]||'';
+    return (c&&c.es)||esDefaults[k]||'';
+  }
+
+  const css=document.createElement('style');
+  css.textContent=`
+    [data-i18n],[data-i18n-ph]{outline:1px dashed rgba(192,57,43,.35);outline-offset:2px}
+    [data-i18n]:hover,[data-i18n-ph]:hover{outline:2px solid var(--rojo);background:rgba(245,176,65,.18);cursor:pointer}
+    [data-i18n][contenteditable=true]{outline:2px solid var(--verde);background:#fff;cursor:text}
+    #edBar{position:fixed;top:10px;right:10px;z-index:300;background:var(--tinta);color:#f3e8d8;font-family:'Segoe UI',sans-serif;font-size:.92rem;border-radius:10px;padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:min(94vw,560px);box-shadow:0 4px 18px rgba(0,0,0,.45)}
+    #edBar .btn{padding:7px 14px;font-size:.88rem}
+    #edModal .mbox{max-width:640px;text-align:left}
+    #edModal textarea{width:100%;min-height:150px;padding:10px 12px;border:1px solid #cbb;border-radius:6px;font-size:.95rem;font-family:Consolas,monospace;line-height:1.5}
+    #edToast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--verde);color:#fff;padding:10px 24px;border-radius:8px;font-family:'Segoe UI',sans-serif;z-index:310;display:none}
+  `;
+  document.head.appendChild(css);
+
+  document.body.insertAdjacentHTML('beforeend',`
+    <div id="edBar">
+      <span>✏️ <b id="edCount">0</b> sin publicar · <span id="edLangTag"></span></span>
+      <button class="btn" id="edPub" disabled>Publicar</button>
+      <button class="btn rojo" id="edDisc" disabled>Descartar</button>
+    </div>
+    <div class="modal" id="edModal">
+      <div class="mbox">
+        <h3 style="margin-bottom:8px;font-size:1.1rem">Editar texto · <code id="edKey"></code></h3>
+        <p class="sans" id="edHint" style="font-size:.85rem;color:var(--cafe);margin-bottom:8px"></p>
+        <textarea id="edTa"></textarea>
+        <div style="margin-top:12px;display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn" id="edCancel" style="background:var(--cafe)">Cancelar</button>
+          <button class="btn" id="edSave">Aplicar</button>
+        </div>
+      </div>
+    </div>
+    <div id="edToast"></div>
+  `);
+  const $=id=>document.getElementById(id);
+
+  function updLangTag(){$('edLangTag').textContent=lang==='es'?'editando ES':'editing EN'}
+  updLangTag();
+  $('langBtn').addEventListener('click',updLangTag);
+
+  function dirtyCount(){let n=0;for(const k in EDITS)n+=Object.keys(EDITS[k]).length;return n}
+  function refreshBar(){
+    const n=dirtyCount();
+    $('edCount').textContent=n;
+    $('edPub').disabled=$('edDisc').disabled=!n;
+  }
+  function recordEdit(k,v){
+    if(v===stored(k)){
+      if(EDITS[k]){delete EDITS[k][lang];if(!Object.keys(EDITS[k]).length)delete EDITS[k];}
+    }else{
+      (EDITS[k]=EDITS[k]||{})[lang]=v;
+    }
+    applyLang();
+    refreshBar();
+  }
+  function toast(m){
+    const t=$('edToast');t.textContent=m;t.style.display='block';
+    setTimeout(()=>{t.style.display='none'},2600);
+  }
+
+  function sanitize(html){
+    const t=document.createElement('template');
+    t.innerHTML=html;
+    (function walk(n){
+      [...n.children].forEach(ch=>{
+        walk(ch);
+        const tag=ch.tagName;
+        if(tag==='SCRIPT'||tag==='STYLE'){ch.remove();return;}
+        const allowed=ALLOWED[tag];
+        if(!allowed){ch.replaceWith(...ch.childNodes);return;}
+        [...ch.attributes].forEach(a=>{if(!allowed.includes(a.name.toLowerCase()))ch.removeAttribute(a.name)});
+        if(tag==='A'){
+          const href=(ch.getAttribute('href')||'').trim();
+          if(!/^(https?:|mailto:|#|\/)/i.test(href)) ch.removeAttribute('href');
+        }
+      });
+    })(t.content);
+    return t.innerHTML.trim();
+  }
+
+  /* --- textarea editor modal (HTML values + placeholders) --- */
+  let modalKey=null, modalPlain=false;
+  function openTextEditor(k,plain){
+    modalKey=k; modalPlain=plain;
+    $('edKey').textContent=k;
+    $('edHint').textContent=plain
+      ?'Texto sin formato.'
+      :'Etiquetas permitidas: <a href>, <em>, <strong>, <br>, <ul>, <li> — todo lo demás se elimina al aplicar.';
+    $('edTa').value=txt(k);
+    $('edModal').classList.add('open');
+    $('edTa').focus();
+  }
+  function closeTextEditor(){$('edModal').classList.remove('open');modalKey=null}
+  $('edCancel').addEventListener('click',closeTextEditor);
+  $('edModal').addEventListener('click',e=>{if(e.target===$('edModal'))closeTextEditor()});
+  $('edSave').addEventListener('click',()=>{
+    if(!modalKey)return;
+    let v=$('edTa').value.trim();
+    if(modalPlain){const tmp=document.createElement('template');tmp.innerHTML=v;v=tmp.content.textContent.trim();}
+    else v=sanitize(v);
+    if(!v){alert('El texto no puede quedar vacío.');return;}
+    recordEdit(modalKey,v);
+    closeTextEditor();
+  });
+
+  /* --- in-place editing --- */
+  function beginEdit(el){
+    const k=el.dataset.i18n;
+    if(hasTags(stored(k))||hasTags(txt(k))){openTextEditor(k,false);return;}
+    if(el.isContentEditable)return;
+    el.contentEditable='true';
+    el.focus();
+    const finish=()=>{
+      el.removeEventListener('blur',finish);
+      el.contentEditable='false';
+      const nv=el.textContent.trim();
+      if(!nv){applyLang();return;}
+      recordEdit(k,nv);
+    };
+    el.addEventListener('blur',finish);
+    el.addEventListener('keydown',function esc(e){
+      if(e.key==='Escape'){
+        el.removeEventListener('keydown',esc);
+        el.removeEventListener('blur',finish);
+        el.contentEditable='false';
+        applyLang();
+      }
+    });
+  }
+
+  /* the confirmation-modal OK buttons close their modal via onclick; in edit
+     mode that would fight with editing them, so drop the inline handler
+     (backdrop click still closes those modals) */
+  document.querySelectorAll('.modal [data-i18n]').forEach(b=>b.removeAttribute('onclick'));
+
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const isLink=el.tagName==='A'||!!el.closest('a');
+    el.addEventListener(isLink?'dblclick':'click',e=>{
+      if(el.isContentEditable)return;
+      e.preventDefault();
+      e.stopPropagation();
+      beginEdit(el);
+    });
+    if(isLink) el.title='Doble clic para editar';
+  });
+
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
+    el.readOnly=true;
+    el.addEventListener('mousedown',e=>e.preventDefault());
+    el.addEventListener('click',e=>{
+      e.preventDefault();
+      openTextEditor(el.dataset.i18nPh,true);
+    });
+  });
+
+  /* --- publish / discard --- */
+  $('edPub').addEventListener('click',async()=>{
+    $('edPub').disabled=true;$('edPub').textContent='Publicando…';
+    const fails=[];
+    await Promise.all(Object.keys(EDITS).map(async k=>{
+      const o=EDITS[k],patch={};
+      if(o.es!=null)patch.es=o.es;
+      if(o.en!=null){patch.en=o.en;patch.en_stale=false;}
+      try{
+        const {data,error}=await sb.from('content').update(patch).eq('key',k).select('key');
+        if(error||!data||!data.length)fails.push(k);
+      }catch(e){fails.push(k);}
+    }));
+    Object.keys(EDITS).forEach(k=>{if(!fails.includes(k))delete EDITS[k]});
+    await loadContent();
+    applyLang();
+    refreshBar();
+    $('edPub').textContent='Publicar';
+    if(fails.length)alert('No se pudieron publicar estos textos: '+fails.join(', '));
+    else toast('Cambios publicados ✔ — ya están en el sitio');
+  });
+
+  $('edDisc').addEventListener('click',()=>{
+    if(!confirm('¿Descartar todos los cambios sin publicar?'))return;
+    for(const k in EDITS)delete EDITS[k];
+    applyLang();
+    refreshBar();
+  });
+
+  window.addEventListener('beforeunload',e=>{
+    if(dirtyCount()){e.preventDefault();e.returnValue='';}
+  });
+
+  refreshBar();
+}
+
 loadContent();
 loadPhotos();
+maybeStartEditMode();
 </script>
 </body>
 </html>

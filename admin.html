@@ -62,6 +62,19 @@
   .badge{display:inline-block;background:var(--amarillo);color:var(--tinta);font-family:'Segoe UI',sans-serif;font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:20px;vertical-align:middle;margin-left:8px}
   .savest{font-size:.85rem;font-family:'Segoe UI',sans-serif;color:var(--verde);min-height:1.2em}
 
+  .menu{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin:30px 0 14px}
+  .bigbtn{display:block;background:var(--blanco);border:1px solid #e8dcc8;border-top:6px solid var(--verde);border-radius:12px;padding:30px 24px;text-align:center;text-decoration:none;color:var(--tinta);box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer;font-family:Georgia,serif}
+  .bigbtn:hover{box-shadow:0 6px 18px rgba(0,0,0,.15);transform:translateY(-2px)}
+  .bigbtn .ico{font-size:2.4rem;display:block;margin-bottom:10px}
+  .bigbtn .t{font-size:1.3rem;font-weight:700;color:var(--rojo)}
+  .bigbtn .d{font-size:.92rem;color:var(--cafe);margin-top:8px;font-family:'Segoe UI',sans-serif}
+  .minor{text-align:center;margin:10px 0 30px;font-family:'Segoe UI',sans-serif;font-size:.92rem}
+  .minor a{color:var(--cafe)}
+
+  .pitem label{display:block;font-size:.78rem;color:var(--cafe);margin:8px 12px 0}
+  .pitem input{width:calc(100% - 24px);margin:2px 12px 0;padding:7px 9px;border:1px solid #cbb;border-radius:6px;font-size:.9rem;font-family:'Segoe UI',sans-serif}
+  .pitem .acts{margin-top:12px}
+
   .empty{text-align:center;color:var(--cafe);font-style:italic;padding:30px 10px}
   .note{background:#fff6e3;border-left:5px solid var(--amarillo);padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:.93rem}
 
@@ -108,15 +121,48 @@
     </span>
   </div>
 
-  <h2>📷 Fotos pendientes <span id="pendCount" class="badge" style="display:none"></span></h2>
-  <p class="note">Las fotos que apruebes aparecerán de inmediato en la galería pública. Las que rechaces se eliminan definitivamente.</p>
-  <div class="pgrid" id="pendGrid"></div>
-  <div class="empty" id="pendEmpty" style="display:none">No hay fotos pendientes de revisión 🎉</div>
-  <div style="margin:8px 0"><button class="btn chico gris" onclick="loadPending()">Actualizar lista</button></div>
+  <!-- ===== landing: choose what to manage ===== -->
+  <div id="homeMenu">
+    <div class="menu">
+      <a class="bigbtn" href="https://xonacatla.com/?edit=1" target="_blank" rel="noopener">
+        <span class="ico">✏️</span>
+        <span class="t">Editar el sitio</span>
+        <span class="d">Se abre el sitio en una pestaña nueva. Haz clic sobre cualquier texto para editarlo y presiona «Publicar».</span>
+      </a>
+      <div class="bigbtn" onclick="showView('galView')">
+        <span class="ico">📷</span>
+        <span class="t">Galería</span>
+        <span class="d">Revisa las fotos pendientes y administra las fotos ya publicadas.</span>
+      </div>
+    </div>
+    <p class="minor"><a href="#" onclick="showView('textView');return false">Editor clásico de textos »</a></p>
+  </div>
 
-  <h2>✏️ Textos del sitio</h2>
-  <p class="note">Edita el texto en español y presiona «Guardar». El texto en inglés se actualiza después por separado — mientras tanto el bloque queda marcado como <span class="badge">traducción pendiente</span>.</p>
-  <div id="textList"></div>
+  <!-- ===== gallery management ===== -->
+  <div id="galView" style="display:none">
+    <div style="margin-top:18px"><button class="btn chico gris" onclick="showView('homeMenu')">← Volver al menú</button></div>
+
+    <h2>📷 Fotos pendientes <span id="pendCount" class="badge" style="display:none"></span></h2>
+    <p class="note">Las fotos que apruebes aparecerán de inmediato en la galería pública. Las que rechaces se eliminan definitivamente.</p>
+    <div class="pgrid" id="pendGrid"></div>
+    <div class="empty" id="pendEmpty" style="display:none">No hay fotos pendientes de revisión 🎉</div>
+    <div style="margin:8px 0"><button class="btn chico gris" onclick="loadPending()">Actualizar lista</button></div>
+
+    <h2>✅ Fotos publicadas <span id="pubCount" class="badge" style="display:none"></span></h2>
+    <p class="note">La <strong>fecha</strong> determina el orden en la galería pública (la más reciente aparece primero). «Despublicar» regresa la foto a pendientes; «Eliminar» la borra definitivamente.</p>
+    <div class="pgrid" id="pubGrid"></div>
+    <div class="empty" id="pubEmpty" style="display:none">No hay fotos publicadas todavía.</div>
+    <div style="margin:8px 0"><button class="btn chico gris" onclick="loadPublished()">Actualizar lista</button></div>
+  </div>
+
+  <!-- ===== classic text editor ===== -->
+  <div id="textView" style="display:none">
+    <div style="margin-top:18px"><button class="btn chico gris" onclick="showView('homeMenu')">← Volver al menú</button></div>
+
+    <h2>✏️ Textos del sitio</h2>
+    <p class="note">Consejo: la forma más fácil de editar es el botón «Editar el sitio» del menú. Este editor muestra todos los textos, incluidos los mensajes que no se ven a simple vista. Edita el texto en español y presiona «Guardar». El texto en inglés se actualiza después por separado — mientras tanto el bloque queda marcado como <span class="badge">traducción pendiente</span>.</p>
+    <div id="textList"></div>
+  </div>
 
 </section>
 
@@ -145,12 +191,19 @@ async function init(){
   session?enter(session):show('loginView',true);
 }
 
+const VIEWS=['homeMenu','galView','textView'];
+function showView(v){
+  VIEWS.forEach(x=>show(x,x===v));
+  if(v==='galView'){loadPending();loadPublished();}
+  if(v==='textView')loadTexts();
+  window.scrollTo({top:0});
+}
+
 function enter(session){
   show('loginView',false);
   show('adminView',true);
   document.getElementById('whoami').textContent='Conectado como '+session.user.email;
-  loadPending();
-  loadTexts();
+  showView('homeMenu');
 }
 
 document.getElementById('loginForm').addEventListener('submit',async ev=>{
@@ -220,7 +273,7 @@ async function approve(p,card,...btns){
   btns.forEach(b=>b.disabled=true);
   const {error}=await sb.from('photos').update({status:'approved'}).eq('id',p.id);
   if(error){alert('No se pudo aprobar: '+error.message);btns.forEach(b=>b.disabled=false);return;}
-  card.remove(); refreshCount();
+  card.remove(); refreshCount(); loadPublished();
 }
 
 async function reject(p,card,...btns){
@@ -239,6 +292,81 @@ function refreshCount(){
   badge.textContent=n;
   badge.style.display=n?'':'none';
   show('pendEmpty',!n);
+}
+
+/* ========== fotos publicadas ========== */
+function toLocalInput(iso){
+  const d=new Date(iso),p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());
+}
+
+async function loadPublished(){
+  const grid=document.getElementById('pubGrid');
+  grid.innerHTML='';
+  const {data,error}=await sb.from('photos')
+    .select('id,storage_path,caption,uploader_name,created_at')
+    .eq('status','approved')
+    .order('created_at',{ascending:false})
+    .limit(200);
+  if(error){grid.innerHTML='<p class="errmsg">Error al cargar: '+esc(error.message)+'</p>';return;}
+  const badge=document.getElementById('pubCount');
+  badge.textContent=data.length;
+  badge.style.display=data.length?'':'none';
+  show('pubEmpty',!data.length);
+  data.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='pitem';
+    d.innerHTML=`
+      <img loading="lazy" src="${pubUrl(p.storage_path)}" alt="">
+      <label>Descripción <input type="text" maxlength="280" class="fcap"></label>
+      <label>Autor <input type="text" maxlength="60" class="fwho" placeholder="Viajero anónimo"></label>
+      <label>Fecha (define el orden en la galería) <input type="datetime-local" class="fdate"></label>
+      <div class="acts">
+        <button class="btn chico" disabled>Guardar</button>
+        <button class="btn chico gris">Despublicar</button>
+        <button class="btn chico rojo">Eliminar</button>
+      </div>`;
+    const [fcap,fwho,fdate]=[d.querySelector('.fcap'),d.querySelector('.fwho'),d.querySelector('.fdate')];
+    fcap.value=p.caption||'';
+    fwho.value=p.uploader_name||'';
+    fdate.value=toLocalInput(p.created_at);
+    d.querySelector('img').addEventListener('click',()=>{
+      document.getElementById('lbImg').src=pubUrl(p.storage_path);
+      document.getElementById('lightbox').classList.add('open');
+    });
+    const [saveBtn,unpubBtn,delBtn]=d.querySelectorAll('.acts .btn');
+    const dirty=()=>{saveBtn.disabled=fcap.value.trim()===(p.caption||'')&&fwho.value.trim()===(p.uploader_name||'')&&fdate.value===toLocalInput(p.created_at)};
+    [fcap,fwho,fdate].forEach(i=>i.addEventListener('input',dirty));
+    saveBtn.addEventListener('click',async()=>{
+      if(fdate.value&&isNaN(new Date(fdate.value).getTime())){alert('Fecha inválida.');return;}
+      saveBtn.disabled=true;
+      const patch={
+        caption:fcap.value.trim()||null,
+        uploader_name:fwho.value.trim()||null,
+        created_at:fdate.value?new Date(fdate.value).toISOString():p.created_at
+      };
+      const {data:upd,error:err}=await sb.from('photos').update(patch).eq('id',p.id).select('id');
+      if(err||!upd||!upd.length){alert('No se pudo guardar: '+(err?err.message:'sin permiso'));saveBtn.disabled=false;return;}
+      loadPublished(); /* re-sort by the (possibly new) date */
+    });
+    unpubBtn.addEventListener('click',async()=>{
+      unpubBtn.disabled=true;
+      const {data:upd,error:err}=await sb.from('photos').update({status:'pending'}).eq('id',p.id).select('id');
+      if(err||!upd||!upd.length){alert('No se pudo despublicar: '+(err?err.message:'sin permiso'));unpubBtn.disabled=false;return;}
+      loadPublished();
+      loadPending();
+    });
+    delBtn.addEventListener('click',async()=>{
+      if(!confirm('¿Eliminar esta foto definitivamente? Se borra el archivo y no se puede recuperar.'))return;
+      delBtn.disabled=true;
+      const st=await sb.storage.from('gallery').remove([p.storage_path]);
+      if(st.error){alert('No se pudo borrar el archivo: '+st.error.message);delBtn.disabled=false;return;}
+      const {error:err}=await sb.from('photos').delete().eq('id',p.id);
+      if(err){alert('Archivo borrado, pero no se pudo borrar el registro: '+err.message);delBtn.disabled=false;return;}
+      loadPublished();
+    });
+    grid.appendChild(d);
+  });
 }
 
 /* ========== textos del sitio ========== */
